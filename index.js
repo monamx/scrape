@@ -21,12 +21,13 @@ app.get('/api/:target', async (req, res) => {
         });
 
         const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle2' });
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
         const content = await page.content();
+        
         res.send(content);
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).send('Something went wrong!');
+        res.status(500).send('Something went wrong: ' + error.message);
     } finally {
         if (browser !== null) {
             await browser.close();
