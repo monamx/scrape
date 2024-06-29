@@ -1,6 +1,6 @@
 const express = require('express');
-const chromium = require('chrome-aws-lambda');
-const puppeteer = require('puppeteer-core');
+const playwright = require('playwright-core');
+const chromium = require('@sparticuz/chromium-min');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,16 +12,16 @@ app.get('/api/:target', async (req, res) => {
     let browser = null;
     
     try {
-        browser = await puppeteer.launch({
+        browser = await playwright.chromium.launch({
             args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
+            executablePath: await chromium.executablePath(),
             headless: chromium.headless,
-            ignoreHTTPSErrors: true,
         });
 
-        const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
         const content = await page.content();
         
         res.send(content);
