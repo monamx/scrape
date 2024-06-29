@@ -1,5 +1,6 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const chromium = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer-core');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -7,19 +8,29 @@ const port = process.env.PORT || 3000;
 app.get('/api/:target', async (req, res) => {
     const target = req.params.target;
     const url = `https://${target}`;
-
+    
+    let browser = null;
+    
     try {
-        const browser = await puppeteer.launch({ headless: true });
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath,
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
+        });
+
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-
         const content = await page.content();
-        await browser.close();
-
         res.send(content);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('Something went wrong!');
+    } finally {
+        if (browser !== null) {
+            await browser.close();
+        }
     }
 });
 
